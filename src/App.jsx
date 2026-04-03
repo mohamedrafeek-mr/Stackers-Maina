@@ -171,7 +171,9 @@ export default function StackersMania() {
 
         /* ── LAYOUT GRID CLASSES (desktop default) ── */
         .hero-grid    { display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:center; width:100%; position:relative; z-index:2; }
-        .stats-bar    { display:grid; grid-template-columns:repeat(4,1fr); background:rgba(127,119,221,.08); border:1px solid rgba(127,119,221,.15); border-radius:16px; overflow:hidden; margin:80px 5%; }
+        .stats-bar    { display:grid; grid-template-columns:repeat(4,1fr); background:rgba(127,119,221,.08); border:1px solid rgba(127,119,221,.15); border-radius:16px; overflow:visible; margin:80px 5%; }
+        .stat-cell    { overflow:visible; }
+        .stat-val     { line-height:1.05; max-height:none; }
         .svc-grid     { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; }
         .about-grid   { display:grid; grid-template-columns:1fr 1fr; gap:80px; align-items:center; }
         .contact-grid { display:grid; grid-template-columns:1fr 1.4fr; gap:60px; }
@@ -239,9 +241,8 @@ export default function StackersMania() {
 
           /* Stats: 2×2 tighter */
           .stats-bar  { grid-template-columns:repeat(2,1fr); margin:36px 5%!important; }
-          .stat-cell  { padding:22px 12px!important; }
-          .stat-val   { font-size:30px!important; }
-
+          .stat-cell  { padding:24px 16px!important; overflow:visible!important; }
+          .stat-val   { font-size:24px!important; line-height:1.05!important; }
           /* Services: 1 col */
           .svc-grid   { grid-template-columns:1fr; }
 
@@ -273,7 +274,7 @@ export default function StackersMania() {
         @media (max-width:480px) {
           .logo-text  { font-size:16px!important; }
           .hero-h1    { font-size:26px!important; }
-          .stat-val   { font-size:26px!important; }
+          .stat-val   { font-size:20px!important; }
           .sec-h2     { font-size:22px!important; }
           .form-card  { padding:20px 14px!important; }
           .svc-card   { padding:22px 18px!important; }
@@ -517,8 +518,11 @@ export default function StackersMania() {
               </div>
             ))}
             <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
-              {[["in","#0077B5"],["ig","#E1306C"],["tw","#1DA1F2"]].map(([s,c]) => (
-                <div key={s} className="social-b" style={{ width: 44, height: 44, borderRadius: 10, background: `${c}22`, border: `1px solid ${c}44`, display: "flex", alignItems: "center", justifyContent: "center", color: c, fontWeight: 700, fontSize: 13, cursor: "pointer", transition: "transform .2s" }}>{s}</div>
+              {[
+                ['in','#0077B5','https://www.linkedin.com/company/stackers-mania'],
+                ['ig','#E1306C','https://www.instagram.com/stackers_mania/']
+              ].map(([s,c,url]) => (
+                <a key={s} href={url} target="_blank" rel="noopener noreferrer" className="social-b" style={{ width: 44, height: 44, borderRadius: 10, background: `${c}22`, border: `1px solid ${c}44`, display: "flex", alignItems: "center", justifyContent: "center", color: c, fontWeight: 700, fontSize: 13, cursor: "pointer", transition: "transform .2s" }}>{s}</a>
               ))}
             </div>
           </div>
