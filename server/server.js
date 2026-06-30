@@ -118,13 +118,50 @@ app.get('/api/test-email', async (req, res) => {
       `
     }
 
-    await transporter.sendMail(testEmail)
-    
-    res.json({
-      success: true,
-      message: 'Test email sent successfully! Check your inbox.',
-      email: process.env.EMAIL_USER
-    })
+    try {
+      await transporter.sendMail(testEmail)
+      console.log('✅ Test email sent via SMTP')
+      res.json({
+        success: true,
+        message: 'Test email sent successfully via SMTP! Check your inbox.',
+        email: process.env.EMAIL_USER
+      })
+      return
+    } catch (smtpErr) {
+      console.warn('⚠️  SMTP test-email failed:', smtpErr.message)
+      if (process.env.SENDGRID_API_KEY) {
+        try {
+          await sgMail.send({
+            to: process.env.EMAIL_USER || 'stackersmania@gmail.com',
+            from: process.env.EMAIL_USER || 'stackersmania@gmail.com',
+            subject: testEmail.subject,
+            html: testEmail.html
+          })
+          console.log('✅ Test email sent via SendGrid')
+          res.json({
+            success: true,
+            message: 'Test email sent successfully via SendGrid! Check your inbox.',
+            email: process.env.EMAIL_USER
+          })
+          return
+        } catch (sgErr) {
+          console.error('Test email SendGrid error:', sgErr)
+          res.status(500).json({
+            success: false,
+            message: 'Failed to send test email via SendGrid',
+            error: sgErr.message
+          })
+          return
+        }
+      }
+      res.status(500).json({
+        success: false,
+        message: 'Failed to send test email via SMTP',
+        error: smtpErr.message,
+        hint: 'Set SENDGRID_API_KEY in environment for API fallback'
+      })
+      return
+    }
   } catch (error) {
     console.error('Test email error:', error)
     res.status(500).json({
