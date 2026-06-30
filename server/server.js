@@ -4,6 +4,7 @@ import dotenv from 'dotenv'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
 import nodemailer from 'nodemailer'
+import sgMail from '@sendgrid/mail'
 
 // Load environment variables
 dotenv.config()
@@ -22,6 +23,16 @@ const transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASSWORD || process.env.GMAIL_APP_PASSWORD
   }
 })
+
+// Configure SendGrid if API key provided (used as fallback when SMTP times out)
+if (process.env.SENDGRID_API_KEY) {
+  try {
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+    console.log('✅ SendGrid configured')
+  } catch (err) {
+    console.warn('⚠️  Could not configure SendGrid:', err.message)
+  }
+}
 
 // Test email connection
 transporter.verify((error, success) => {
@@ -223,19 +234,46 @@ app.post('/api/contact', async (req, res) => {
       `
     }
 
-    // Send both emails
+    // Send admin email (try SMTP, fallback to SendGrid)
     try {
       await transporter.sendMail(mailToAdmin)
-      console.log('✅ Contact email sent to admin')
+      console.log('✅ Contact email sent to admin via SMTP')
     } catch (emailError) {
-      console.warn('⚠️  Could not send admin email:', emailError.message)
+      console.warn('⚠️  Could not send admin email via SMTP:', emailError.message)
+      if (process.env.SENDGRID_API_KEY) {
+        try {
+          await sgMail.send({
+            to: mailToAdmin.to,
+            from: mailToAdmin.from,
+            subject: mailToAdmin.subject,
+            html: mailToAdmin.html
+          })
+          console.log('✅ Contact email sent to admin via SendGrid')
+        } catch (sgError) {
+          console.warn('⚠️  Could not send admin email via SendGrid:', sgError.message)
+        }
+      }
     }
 
+    // Send confirmation email to user (try SMTP, fallback to SendGrid)
     try {
       await transporter.sendMail(mailToUser)
-      console.log('✅ Confirmation email sent to user')
+      console.log('✅ Confirmation email sent to user via SMTP')
     } catch (emailError) {
-      console.warn('⚠️  Could not send confirmation email:', emailError.message)
+      console.warn('⚠️  Could not send confirmation email via SMTP:', emailError.message)
+      if (process.env.SENDGRID_API_KEY) {
+        try {
+          await sgMail.send({
+            to: mailToUser.to,
+            from: mailToUser.from,
+            subject: mailToUser.subject,
+            html: mailToUser.html
+          })
+          console.log('✅ Confirmation email sent to user via SendGrid')
+        } catch (sgError) {
+          console.warn('⚠️  Could not send confirmation email via SendGrid:', sgError.message)
+        }
+      }
     }
 
     res.json({
@@ -359,19 +397,53 @@ app.post('/api/careers', async (req, res) => {
       `
     }
 
-    // Send both emails
+    // Send admin email (try SMTP, fallback to SendGrid)
     try {
       await transporter.sendMail(mailToAdmin)
-      console.log('✅ Application email sent to admin')
+      console.log('✅ Application email sent to admin via SMTP')
     } catch (emailError) {
-      console.warn('⚠️  Could not send admin email:', emailError.message)
+      console.warn('⚠️  Could not send admin email via SMTP:', emailError.message)
+      if (process.env.SENDGRID_API_KEY) {
+        try {
+          const sgMsg = {
+            to: mailToAdmin.to,
+            from: mailToAdmin.from,
+            subject: mailToAdmin.subject,
+            html: mailToAdmin.html,
+            attachments: mailToAdmin.attachments && mailToAdmin.attachments.length ? mailToAdmin.attachments.map(a => ({
+              content: a.content,
+              filename: a.filename,
+              type: 'application/octet-stream',
+              disposition: 'attachment'
+            })) : undefined
+          }
+          await sgMail.send(sgMsg)
+          console.log('✅ Application email sent to admin via SendGrid')
+        } catch (sgError) {
+          console.warn('⚠️  Could not send admin email via SendGrid:', sgError.message)
+        }
+      }
     }
 
+    // Send confirmation email to applicant (try SMTP, fallback to SendGrid)
     try {
       await transporter.sendMail(mailToApplicant)
-      console.log('✅ Confirmation email sent to applicant')
+      console.log('✅ Confirmation email sent to applicant via SMTP')
     } catch (emailError) {
-      console.warn('⚠️  Could not send confirmation email:', emailError.message)
+      console.warn('⚠️  Could not send confirmation email via SMTP:', emailError.message)
+      if (process.env.SENDGRID_API_KEY) {
+        try {
+          await sgMail.send({
+            to: mailToApplicant.to,
+            from: mailToApplicant.from,
+            subject: mailToApplicant.subject,
+            html: mailToApplicant.html
+          })
+          console.log('✅ Confirmation email sent to applicant via SendGrid')
+        } catch (sgError) {
+          console.warn('⚠️  Could not send confirmation email via SendGrid:', sgError.message)
+        }
+      }
     }
 
     res.json({
