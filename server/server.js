@@ -16,11 +16,13 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 // Configure email transporter
+const emailUser = process.env.EMAIL_USER || 'stackersmania@gmail.com'
+const emailPassword = process.env.EMAIL_PASSWORD || process.env.GMAIL_APP_PASSWORD
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: process.env.EMAIL_USER || 'stackersmania@gmail.com',
-    pass: process.env.EMAIL_PASSWORD || process.env.GMAIL_APP_PASSWORD
+    user: emailUser,
+    pass: emailPassword
   }
 })
 
@@ -79,7 +81,13 @@ const sendMailWithFallback = async (mailOptions, label) => {
 transporter.verify((error, success) => {
   if (error) {
     console.warn('⚠️  Email service not fully configured:', error.message)
-    console.log('ℹ️  To enable email sending, configure EMAIL_USER and EMAIL_PASSWORD in .env')
+    console.log('ℹ️  To enable email sending, configure EMAIL_USER and either EMAIL_PASSWORD or GMAIL_APP_PASSWORD in environment variables')
+    if (!process.env.EMAIL_USER) {
+      console.log('ℹ️  EMAIL_USER is missing')
+    }
+    if (!emailPassword) {
+      console.log('ℹ️  EMAIL_PASSWORD or GMAIL_APP_PASSWORD is missing')
+    }
   } else {
     console.log('✅ Email service is ready')
   }
