@@ -52,7 +52,7 @@ if (process.env.SENDGRID_API_KEY) {
 const createSendGridMessage = (mailOptions) => {
   const msg = {
     to: mailOptions.to,
-    from: process.env.SENDGRID_FROM || mailOptions.from,
+    from: sendGridFrom || mailOptions.from,
     subject: mailOptions.subject,
     html: mailOptions.html
   }
