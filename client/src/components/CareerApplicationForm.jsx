@@ -10,7 +10,7 @@ const jobPositions = [
 ]
 
 const getApiUrl = (path) => {
-  const baseUrl = (import.meta.env.VITE_API_URL || '').trim().replace(/\/$/, '')
+  const baseUrl = (import.meta.env.VITE_API_URL || 'https://stackers-maina.onrender.com').trim().replace(/\/$/, '')
   return baseUrl ? `${baseUrl}${path}` : path
 }
 
