@@ -64,6 +64,18 @@ const createSendGridMessage = (mailOptions) => {
 }
 
 const sendMailWithFallback = async (mailOptions, label) => {
+  if (process.env.SENDGRID_API_KEY) {
+    try {
+      const sgMailOptions = createSendGridMessage(mailOptions)
+      await sgMail.send(sgMailOptions)
+      console.log(`✅ ${label} sent via SendGrid`)
+      return 'sendgrid'
+    } catch (sgErr) {
+      console.warn(`⚠️ ${label} via SendGrid failed: ${sgErr.message}`)
+      console.warn('ℹ️ Falling back to SMTP because SendGrid failed')
+    }
+  }
+
   try {
     await transporter.sendMail(mailOptions)
     console.log(`✅ ${label} sent via SMTP`)
@@ -74,15 +86,7 @@ const sendMailWithFallback = async (mailOptions, label) => {
       console.warn('⚠️ SendGrid API key is not configured, fallback unavailable.')
       throw smtpErr
     }
-    try {
-      const sgMailOptions = createSendGridMessage(mailOptions)
-      await sgMail.send(sgMailOptions)
-      console.log(`✅ ${label} sent via SendGrid`)
-      return 'sendgrid'
-    } catch (sgErr) {
-      console.warn(`⚠️ ${label} via SendGrid failed: ${sgErr.message}`)
-      throw sgErr
-    }
+    throw smtpErr
   }
 }
 
