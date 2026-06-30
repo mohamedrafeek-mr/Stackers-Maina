@@ -16,8 +16,17 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 // Configure email transporter
-const emailUser = process.env.EMAIL_USER || 'stackersmania@gmail.com'
-const emailPassword = process.env.EMAIL_PASSWORD || process.env.GMAIL_APP_PASSWORD
+let emailUser = process.env.EMAIL_USER || 'stackersmania@gmail.com'
+let emailPassword = process.env.EMAIL_PASSWORD || process.env.GMAIL_APP_PASSWORD
+
+// Recover from malformed env files where EMAIL_USER and GMAIL_APP_PASSWORD are concatenated on one line
+if (!process.env.EMAIL_PASSWORD && !process.env.GMAIL_APP_PASSWORD && emailUser?.includes('GMAIL_APP_PASSWORD=')) {
+  const [userPart, passPart] = emailUser.split('GMAIL_APP_PASSWORD=')
+  emailUser = userPart.trim()
+  emailPassword = passPart?.trim()
+  console.log('ℹ️  Parsed GMAIL_APP_PASSWORD from malformed EMAIL_USER env entry')
+}
+
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -81,12 +90,17 @@ const sendMailWithFallback = async (mailOptions, label) => {
 transporter.verify((error, success) => {
   if (error) {
     console.warn('⚠️  Email service not fully configured:', error.message)
-    console.log('ℹ️  To enable email sending, configure EMAIL_USER and either EMAIL_PASSWORD or GMAIL_APP_PASSWORD in environment variables')
-    if (!process.env.EMAIL_USER) {
-      console.log('ℹ️  EMAIL_USER is missing')
-    }
-    if (!emailPassword) {
-      console.log('ℹ️  EMAIL_PASSWORD or GMAIL_APP_PASSWORD is missing')
+    if (!process.env.EMAIL_USER || !emailPassword) {
+      console.log('ℹ️  To enable email sending, configure EMAIL_USER and either EMAIL_PASSWORD or GMAIL_APP_PASSWORD in environment variables')
+      if (!process.env.EMAIL_USER) {
+        console.log('ℹ️  EMAIL_USER is missing')
+      }
+      if (!emailPassword) {
+        console.log('ℹ️  EMAIL_PASSWORD or GMAIL_APP_PASSWORD is missing')
+      }
+    } else {
+      console.log('ℹ️  EMAIL_USER and password are configured. A connection timeout usually means your host blocks Gmail SMTP or network access is restricted.')
+      console.log('ℹ️  On Render, use SENDGRID_API_KEY for an API-based fallback and avoid SMTP timeouts.')
     }
   } else {
     console.log('✅ Email service is ready')
