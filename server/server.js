@@ -18,6 +18,7 @@ const __dirname = dirname(__filename)
 // Configure email transporter
 let emailUser = process.env.EMAIL_USER || 'stackersmania@gmail.com'
 let emailPassword = process.env.EMAIL_PASSWORD || process.env.GMAIL_APP_PASSWORD
+const sendGridFrom = process.env.SENDGRID_FROM || emailUser
 
 // Recover from malformed env files where EMAIL_USER and GMAIL_APP_PASSWORD are concatenated on one line
 if (!process.env.EMAIL_PASSWORD && !process.env.GMAIL_APP_PASSWORD && emailUser?.includes('GMAIL_APP_PASSWORD=')) {
@@ -40,15 +41,14 @@ if (process.env.SENDGRID_API_KEY) {
   try {
     sgMail.setApiKey(process.env.SENDGRID_API_KEY)
     console.log('✅ SendGrid configured')
-  } catch (err) {
-    console.warn('⚠️  Could not configure SendGrid:', err.message)
-  }
-}
+      if (!process.env.SENDGRID_FROM) {
+        console.log('ℹ️  SENDGRID_FROM is not configured, using EMAIL_USER as the SendGrid sender address')
+      }
 
 const createSendGridMessage = (mailOptions) => {
   const msg = {
     to: mailOptions.to,
-    from: mailOptions.from,
+    from: process.env.SENDGRID_FROM || mailOptions.from,
     subject: mailOptions.subject,
     html: mailOptions.html
   }
@@ -72,14 +72,9 @@ const sendMailWithFallback = async (mailOptions, label) => {
       return 'sendgrid'
     } catch (sgErr) {
       console.warn(`⚠️ ${label} via SendGrid failed: ${sgErr.message}`)
-      console.warn('ℹ️ Falling back to SMTP because SendGrid failed')
-    }
-  }
-
-  try {
-    await transporter.sendMail(mailOptions)
-    console.log(`✅ ${label} sent via SMTP`)
-    return 'smtp'
+        if (sgErr.response?.statusCode === 403 || sgErr.response?.body?.errors) {
+          console.warn('⚠️ SendGrid forbidden: verify SENDGRID_FROM sender identity and that the API key has Mail Send permissions')
+        }
   } catch (smtpErr) {
     console.warn(`⚠️ ${label} via SMTP failed: ${smtpErr.message}`)
     if (!process.env.SENDGRID_API_KEY) {
