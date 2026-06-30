@@ -9,6 +9,11 @@ const jobPositions = [
   'Marketing Manager'
 ]
 
+const getApiUrl = (path) => {
+  const baseUrl = (import.meta.env.VITE_API_URL || '').trim().replace(/\/$/, '')
+  return baseUrl ? `${baseUrl}${path}` : path
+}
+
 export default function CareerApplicationForm({ jobTitle, onClose }) {
   const [formData, setFormData] = useState({
     name: '',
@@ -64,7 +69,7 @@ export default function CareerApplicationForm({ jobTitle, onClose }) {
       reader.onload = async (event) => {
         const cvBase64 = event.target.result
         
-        const response = await fetch('/api/careers', {
+        const response = await fetch(getApiUrl('/api/careers'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
