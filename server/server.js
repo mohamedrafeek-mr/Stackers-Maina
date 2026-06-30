@@ -41,9 +41,13 @@ if (process.env.SENDGRID_API_KEY) {
   try {
     sgMail.setApiKey(process.env.SENDGRID_API_KEY)
     console.log('✅ SendGrid configured')
-      if (!process.env.SENDGRID_FROM) {
-        console.log('ℹ️  SENDGRID_FROM is not configured, using EMAIL_USER as the SendGrid sender address')
-      }
+    if (!process.env.SENDGRID_FROM) {
+      console.log('ℹ️  SENDGRID_FROM is not configured, using EMAIL_USER as the SendGrid sender address')
+    }
+  } catch (err) {
+    console.warn('⚠️  Could not configure SendGrid:', err.message)
+  }
+}
 
 const createSendGridMessage = (mailOptions) => {
   const msg = {
@@ -72,9 +76,17 @@ const sendMailWithFallback = async (mailOptions, label) => {
       return 'sendgrid'
     } catch (sgErr) {
       console.warn(`⚠️ ${label} via SendGrid failed: ${sgErr.message}`)
-        if (sgErr.response?.statusCode === 403 || sgErr.response?.body?.errors) {
-          console.warn('⚠️ SendGrid forbidden: verify SENDGRID_FROM sender identity and that the API key has Mail Send permissions')
-        }
+      if (sgErr.response?.statusCode === 403 || sgErr.response?.body?.errors) {
+        console.warn('⚠️ SendGrid forbidden: verify SENDGRID_FROM sender identity and that the API key has Mail Send permissions')
+      }
+      console.warn('ℹ️ Falling back to SMTP because SendGrid failed')
+    }
+  }
+
+  try {
+    await transporter.sendMail(mailOptions)
+    console.log(`✅ ${label} sent via SMTP`)
+    return 'smtp'
   } catch (smtpErr) {
     console.warn(`⚠️ ${label} via SMTP failed: ${smtpErr.message}`)
     if (!process.env.SENDGRID_API_KEY) {
