@@ -68,7 +68,9 @@ const createSendGridMessage = (mailOptions) => {
 }
 
 const sendMailWithFallback = async (mailOptions, label) => {
-  if (process.env.SENDGRID_API_KEY) {
+  const useSendGrid = Boolean(process.env.SENDGRID_API_KEY)
+
+  if (useSendGrid) {
     try {
       const sgMailOptions = createSendGridMessage(mailOptions)
       await sgMail.send(sgMailOptions)
@@ -89,9 +91,8 @@ const sendMailWithFallback = async (mailOptions, label) => {
     return 'smtp'
   } catch (smtpErr) {
     console.warn(`⚠️ ${label} via SMTP failed: ${smtpErr.message}`)
-    if (!process.env.SENDGRID_API_KEY) {
+    if (!useSendGrid) {
       console.warn('⚠️ SendGrid API key is not configured, fallback unavailable.')
-      throw smtpErr
     }
     throw smtpErr
   }
