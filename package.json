@@ -1,0 +1,22 @@
+{
+  "name": "stackers-mania",
+  "version": "1.0.0",
+  "description": "Modern business website for Stackers Mania - Web Design & Development Company",
+  "type": "module",
+  "scripts": {
+    "dev:client": "cd client && npm run dev",
+    "dev:server": "cd server && npm run dev",
+    "build:client": "cd client && npm run build",
+    "build:server": "cd server && npm run build",
+    "start": "cd server && npm start",
+    "install:all": "npm install && cd client && npm install && cd ../server && npm install"
+  },
+  "keywords": [
+    "web-design",
+    "web-development",
+    "react",
+    "express"
+  ],
+  "author": "Stackers Mania",
+  "license": "MIT"
+}
